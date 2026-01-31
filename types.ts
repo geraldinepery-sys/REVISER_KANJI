@@ -1,0 +1,29 @@
+
+export enum StoryType {
+  MODERN = "現在な物語",
+  FANTASY = "ファンタジー物語",
+  CONVERSATION = "会話"
+}
+
+export enum Tense {
+  PAST = "過去形",
+  PRESENT = "現在形",
+  FUTURE = "未来形"
+}
+
+export interface WordEntry {
+  raw: string;
+  kanji: string;
+  reading: string;
+  meaning: string;
+}
+
+export interface AppState {
+  inputText: string;
+  listeA: string;
+  storyType: StoryType;
+  tense: Tense;
+  generatedText: string;
+  listeB: string;
+  loading: boolean;
+}

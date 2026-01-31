@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>れんぐ先生と日本語を勉強して</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kaisei+Tokumin:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              lavenderBlush: '#FFF0F5',
+              indianRed: '#CD5C5C',
+              brownCustom: '#A52A2A',
+            },
+            fontFamily: {
+              kaisei: ['"Kaisei Tokumin"', 'serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Kaisei Tokumin', serif;
+        background-color: #FFF0F5;
+        color: black;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+      
+      /* Background Layer */
+      .bg-scene {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        background: linear-gradient(to bottom, #FFF0F5 0%, #ffdfef 100%);
+      }
+
+      /* Falling Petals Animation */
+      .petal {
+        position: fixed;
+        background-color: #ffb7c5;
+        border-radius: 150% 0 150% 0;
+        z-index: -1;
+        pointer-events: none;
+        animation: fall linear infinite;
+      }
+
+      @keyframes fall {
+        0% {
+          transform: translateY(-10vh) translateX(0) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(110vh) translateX(100px) rotate(360deg);
+          opacity: 0.3;
+        }
+      }
+
+      /* Mt Fuji Silhouette */
+      .fuji {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        height: 300px;
+        background: radial-gradient(circle at top, transparent 40%, rgba(100, 110, 160, 0.1) 40%);
+        clip-path: polygon(0% 100%, 20% 100%, 50% 40%, 80% 100%, 100% 100%);
+        z-index: -2;
+        background-color: rgba(200, 210, 255, 0.2);
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
+  }
+}
+</script>
+</head>
+<body class="bg-lavenderBlush text-black">
+    <div class="bg-scene"></div>
+    <div class="fuji"></div>
+    <div id="root"></div>
+    <script type="module">
+      // Create some petals
+      const petalCount = 30;
+      for (let i = 0; i < petalCount; i++) {
+        const petal = document.createElement('div');
+        petal.className = 'petal';
+        petal.style.left = Math.random() * 100 + 'vw';
+        petal.style.width = (Math.random() * 10 + 5) + 'px';
+        petal.style.height = (Math.random() * 10 + 5) + 'px';
+        petal.style.animationDuration = (Math.random() * 10 + 5) + 's';
+        petal.style.animationDelay = (Math.random() * 10) + 's';
+        document.body.appendChild(petal);
+      }
+    </script>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
