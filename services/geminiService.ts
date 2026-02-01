@@ -1,6 +1,7 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { StoryType, Tense } from "../types";
+import { StoryType, Tense, Language } from "../types";
+import { translations } from "../translations";
 
 const MODEL_NAME = 'gemini-3-flash-preview';
 
@@ -14,7 +15,8 @@ export class GeminiService {
   /**
    * METHODE_LISTER_MOT implementation
    */
-  async extractWords(text: string): Promise<string> {
+  async extractWords(text: string, language: Language): Promise<string> {
+    const langLabel = translations[language].name;
     const prompt = `
       Tu es un expert linguiste japonais. Analyse le texte suivant et extrais uniquement les mots ou unités lexicales (composés, noms, radicaux verbaux/adjectivaux) qui contiennent au moins un kanji.
       
@@ -24,10 +26,11 @@ export class GeminiService {
       - Ignore les séquences purement en hiragana/katakana (particules, terminaisons isolées).
       - Les mots sont listés dans le sens d'apparition du texte.
       - Chaque mot apparaît une SEULE fois dans la liste (supprime les doublons).
-      - Pour chaque unité : Donne la forme exacte (avec kanji), la lecture en hiragana et une traduction française brève.
+      - Pour chaque unité : Donne la forme exacte (avec kanji), la lecture en hiragana et une traduction brève en ${langLabel}.
       - Vérification finale : Assure-toi que CHAQUE kanji présent dans le texte de référence se retrouve dans au moins un mot de la liste.
       
-      Format attendu : Markdown numéroté, "1. Mot、Lecture、Traduction".
+      IMPORTANT : La réponse doit être rédigée pour un utilisateur parlant ${langLabel}.
+      Format attendu : Markdown numéroté, "1. Mot、Lecture、[Traduction en ${langLabel}]".
       
       Texte à analyser :
       ${text}
@@ -41,9 +44,11 @@ export class GeminiService {
     return response.text || "";
   }
 
-  async generateStory(listeA: string, type: StoryType, tense: Tense): Promise<string> {
+  async generateStory(listeA: string, type: StoryType, tense: Tense, language: Language): Promise<string> {
+    const langLabel = translations[language].name;
     const prompt = `
-      Tu es un expert linguistique en Japonais. Écris un nouveau texte court pour un étudiant.
+      Tu es un expert linguistique en Japonais aidant un étudiant dont la langue maternelle est le ${langLabel}. 
+      Écris un nouveau texte court en japonais pour cet étudiant.
       
       CONTRAINTES :
       - Style d'histoire : ${type}
@@ -76,18 +81,21 @@ export class GeminiService {
   /**
    * METHODE_KANJI_MOT_COURANT implementation
    */
-  async getCommonWords(kanji: string, count: string): Promise<string> {
+  async getCommonWords(kanji: string, count: string, language: Language): Promise<string> {
+    const langLabel = translations[language].name;
     const prompt = `
       Tu es un expert linguiste japonais. 
       METHODE_KANJI_MOT_COURANT :
       A partir du KANJI_REFERENCE "${kanji}", liste les ${count} mots japonais les plus courants contenant ce kanji.
       
-      Format strict de sortie (respecte scrupuleusement les tirets et virgules) :
-      Introduction : "Voici les ${count} mots les plus courants contenant le kanji ${kanji}, avec leurs significations principales et un exemple simple d’usage. Les exemples sont donnés en japonais, puis en français."
+      IMPORTANT : Toute la réponse (introduction, explications, traductions) doit être rédigée en ${langLabel}.
+      
+      Format de sortie :
+      Introduction : Une introduction naturelle en ${langLabel} expliquant que voici les ${count} mots les plus courants contenant le kanji ${kanji}.
 
       Structure de chaque mot :
-      X-Mot、Lecture en hiragana、Traduction(s)
-      Exemple : [Phrase en japonais] 、Lecture en hiragana→ [Traduction en français]
+      X-Mot、Lecture en hiragana、[Traduction en ${langLabel}]
+      Exemple : [Phrase en japonais] 、Lecture en hiragana→ [Traduction en ${langLabel}]
 
       Utilise la ponctuation japonaise pour les phrases d'exemple. Ne mets pas de texte superflu en dehors de cette structure.
     `;

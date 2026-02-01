@@ -1,6 +1,8 @@
+
 import React, { useState, useRef } from 'react';
-import { StoryType, Tense } from './types';
+import { StoryType, Tense, Language } from './types';
 import { GeminiService } from './services/geminiService';
+import { translations } from './translations';
 
 const JapanLogo = () => (
   <div className="w-24 h-24 flex-shrink-0 drop-shadow-2xl hover:scale-110 transition-transform duration-300 cursor-pointer">
@@ -20,6 +22,7 @@ const JapanLogo = () => (
 const App: React.FC = () => {
   // Navigation
   const [activeTab, setActiveTab] = useState<'review' | 'discovery'>('review');
+  const [language, setLanguage] = useState<Language>(Language.FR);
 
   // Tab 1: Review State
   const [inputText, setInputText] = useState('');
@@ -40,6 +43,9 @@ const App: React.FC = () => {
   
   const geminiRef = useRef(new GeminiService());
 
+  // Translations
+  const t = translations[language];
+
   // Utilitaires de validation
   const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
   const hasAlphanumeric = (text: string) => /[a-zA-Z0-9]/.test(text);
@@ -52,7 +58,7 @@ const App: React.FC = () => {
     setLoadingA(true);
     setListeA('');
     try {
-      const result = await geminiRef.current.extractWords(inputText);
+      const result = await geminiRef.current.extractWords(inputText, language);
       setListeA(result);
     } catch (error) {
       console.error("Error extracting A:", error);
@@ -68,12 +74,12 @@ const App: React.FC = () => {
     setListeB('');
     
     try {
-      const story = await geminiRef.current.generateStory(listeA, storyType, tense);
+      const story = await geminiRef.current.generateStory(listeA, storyType, tense, language);
       setGeneratedText(story);
       setLoadingStory(false);
       
       setLoadingB(true);
-      const extractedB = await geminiRef.current.extractWords(story);
+      const extractedB = await geminiRef.current.extractWords(story, language);
       setListeB(extractedB);
     } catch (error) {
       console.error("Error in generation flow:", error);
@@ -91,7 +97,7 @@ const App: React.FC = () => {
     setLoadingC(true);
     setListeC('');
     try {
-      const result = await geminiRef.current.getCommonWords(kanjiRef, numWords);
+      const result = await geminiRef.current.getCommonWords(kanjiRef, numWords, language);
       setListeC(result);
     } catch (error) {
       console.error("Error extracting C:", error);
@@ -116,32 +122,48 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen relative font-kaisei text-black flex flex-col items-center">
+      {/* Language Selector (Top Right) */}
+      <div className="absolute top-4 right-4 z-50">
+        <select 
+          value={language}
+          onChange={(e) => setLanguage(e.target.value as Language)}
+          className="bg-white/80 backdrop-blur-sm border-2 border-black rounded-md px-3 py-1 font-bold shadow-md cursor-pointer hover:bg-white transition-colors text-sm md:text-base outline-none focus:ring-2 focus:ring-indianRed"
+        >
+          {Object.entries(translations).map(([code, data]) => (
+            <option key={code} value={code}>{data.langName}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Header with Title and Logo */}
       <header className="w-full max-w-5xl px-6 pt-10 flex flex-col items-center gap-6">
         <div className="flex flex-col md:flex-row items-center gap-6 text-center">
           <JapanLogo />
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
-            れんぐ先生と日本語を勉強しましょう!
-          </h1>
+          <div>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+              れんぐ先生と日本語を勉強しましょう!
+            </h1>
+            <p className="text-xl md:text-2xl mt-2 font-medium text-indianRed">{t.title}</p>
+          </div>
         </div>
 
         {/* External Links Navigation */}
         <nav className="flex flex-wrap justify-center gap-4 py-4 w-full">
           <a href="https://www.dictionnaire-japonais.com/index.php" target="_blank" rel="noopener noreferrer" 
              className="px-5 py-2 bg-white border border-black hover:bg-black hover:text-white transition-colors rounded shadow-sm text-sm font-bold">
-            辞書
+            {t.nav.dict}
           </a>
           <a href="https://kanjikana.com/fr" target="_blank" rel="noopener noreferrer" 
              className="px-5 py-2 bg-white border border-black hover:bg-black hover:text-white transition-colors rounded shadow-sm text-sm font-bold">
-            漢字 JLPT
+            {t.nav.jlpt}
           </a>
           <a href="https://jpdb.io/kanken-kanji" target="_blank" rel="noopener noreferrer" 
              className="px-5 py-2 bg-white border border-black hover:bg-black hover:text-white transition-colors rounded shadow-sm text-sm font-bold">
-            漢字Kanken
+            {t.nav.kanken}
           </a>
           <a href="https://kanji123.org/" target="_blank" rel="noopener noreferrer" 
              className="px-5 py-2 bg-white border border-black hover:bg-black hover:text-white transition-colors rounded shadow-sm text-sm font-bold">
-            漢字のテスト
+            {t.nav.test}
           </a>
         </nav>
 
@@ -149,15 +171,21 @@ const App: React.FC = () => {
         <div className="flex gap-2 p-1 bg-black/10 rounded-lg border border-black/20">
           <button 
             onClick={() => setActiveTab('review')}
-            className={`px-10 py-3 rounded-md font-bold transition-all text-lg ${activeTab === 'review' ? 'bg-black text-white shadow-lg scale-105' : 'hover:bg-black/5'}`}
+            className={`px-4 md:px-10 py-3 rounded-md font-bold transition-all text-sm md:text-lg ${activeTab === 'review' ? 'bg-black text-white shadow-lg scale-105' : 'hover:bg-black/5'}`}
           >
-            漢字を復習
+            <div className="flex flex-col">
+              <span>{t.tabs.review}</span>
+              <span className="text-xs opacity-80 uppercase tracking-tighter">{t.tabLabels.review}</span>
+            </div>
           </button>
           <button 
             onClick={() => setActiveTab('discovery')}
-            className={`px-10 py-3 rounded-md font-bold transition-all text-lg ${activeTab === 'discovery' ? 'bg-black text-white shadow-lg scale-105' : 'hover:bg-black/5'}`}
+            className={`px-4 md:px-10 py-3 rounded-md font-bold transition-all text-sm md:text-lg ${activeTab === 'discovery' ? 'bg-black text-white shadow-lg scale-105' : 'hover:bg-black/5'}`}
           >
-            漢字を探す
+            <div className="flex flex-col">
+              <span>{t.tabs.search}</span>
+              <span className="text-xs opacity-80 uppercase tracking-tighter">{t.tabLabels.search}</span>
+            </div>
           </button>
         </div>
       </header>
@@ -169,20 +197,18 @@ const App: React.FC = () => {
           <div className="flex flex-col gap-10">
             <div className="bg-white/50 backdrop-blur-sm p-8 rounded-lg shadow-md border-l-8 border-brownCustom">
               <p className="text-lg leading-relaxed">
-                こんにちは！ れんぐ先生です. Je suis Rengu Sensei, professeur de Japonais. <strong>ようこそ !</strong><br />
-                Mon objectif est de t’aider à réviser les mots que tu apprends. Partage le texte ou une liste de mots que tu révises. 
-                Je vais t’écrire un nouveau texte pour que tu puisses t’entraîner à lire en japonais. 宜しくお願いします.
+                {t.introReview}
               </p>
             </div>
 
             <div className="flex flex-col gap-4">
               <label className="font-bold text-xl flex items-center gap-2">
-                <span className="bg-brownCustom text-white px-2 py-1 rounded text-sm">Texte de référence :</span> 
+                <span className="bg-brownCustom text-white px-2 py-1 rounded text-sm">{t.labelRefText}</span> 
               </label>
               <textarea
                 className="w-full bg-indianRed text-white p-5 rounded border border-brownCustom focus:outline-none focus:ring-2 focus:ring-black placeholder-white/60 text-lg shadow-inner"
                 rows={10}
-                placeholder="日本語での資料とか言葉..."
+                placeholder={t.placeholderInput}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
@@ -192,15 +218,15 @@ const App: React.FC = () => {
                   disabled={loadingA || !inputText || !hasKanji(inputText)}
                   className="px-12 py-4 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all disabled:opacity-30 text-xl shadow-lg uppercase tracking-widest"
                 >
-                  送る
+                  {t.btnSend}
                 </button>
-                {loadingA && <p className="animate-pulse font-bold text-brownCustom text-lg">Génération en cours...</p>}
+                {loadingA && <p className="animate-pulse font-bold text-brownCustom text-lg">{t.generating}</p>}
               </div>
             </div>
 
             {listeA && (
               <div className="bg-white/80 p-6 rounded-lg shadow-lg border-2 border-black/5">
-                <h3 className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei">LISTE_A : Mots extraits</h3>
+                <h3 className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei">{t.extractedWords}</h3>
                 <div className="prose max-w-none whitespace-pre-wrap leading-relaxed text-lg">
                   {listeA}
                 </div>
@@ -210,7 +236,7 @@ const App: React.FC = () => {
             {listeA && (
               <div className="flex flex-col md:flex-row gap-6 bg-white/70 p-8 rounded-xl border border-black/10 shadow-lg">
                 <div className="flex-1 flex flex-col gap-3">
-                  <label className="font-bold">物語のタイプ (Type d'histoire) :</label>
+                  <label className="font-bold">{t.storyType}</label>
                   <select 
                     className="p-3 border-2 border-black rounded bg-white text-lg focus:ring-2 focus:ring-indianRed outline-none"
                     value={storyType}
@@ -220,7 +246,7 @@ const App: React.FC = () => {
                   </select>
                 </div>
                 <div className="flex-1 flex flex-col gap-3">
-                  <label className="font-bold">動詞の活用 (Conjugaison) :</label>
+                  <label className="font-bold">{t.tense}</label>
                   <select 
                     className="p-3 border-2 border-black rounded bg-white text-lg focus:ring-2 focus:ring-indianRed outline-none"
                     value={tense}
@@ -235,7 +261,7 @@ const App: React.FC = () => {
                     disabled={loadingStory || loadingB}
                     className="w-full md:w-auto px-8 py-3 bg-brownCustom text-white font-bold hover:bg-black transition-all rounded shadow-md text-lg"
                   >
-                    {loadingStory ? "Génération..." : "Générer l'histoire"}
+                    {loadingStory ? t.generating : t.btnGenerate}
                   </button>
                 </div>
               </div>
@@ -243,20 +269,20 @@ const App: React.FC = () => {
 
             {generatedText && (
               <div className="bg-white/95 p-10 rounded-xl shadow-2xl border-t-8 border-black">
-                <h3 className="font-bold text-3xl mb-8 text-center text-brownCustom">Nouveau texte</h3>
+                <h3 className="font-bold text-3xl mb-8 text-center text-brownCustom">{t.newStory}</h3>
                 <div 
                   className="text-2xl leading-[3.5rem] tracking-wider whitespace-pre-line text-justify" 
                   dangerouslySetInnerHTML={{ 
                     __html: generatedText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-indianRed border-b-2 border-indianRed/30">$1</strong>') 
                   }} 
                 />
-                {loadingB && <p className="mt-8 text-center animate-pulse font-bold text-brownCustom">La liste B est en cours de génération...</p>}
+                {loadingB && <p className="mt-8 text-center animate-pulse font-bold text-brownCustom">{t.generating}</p>}
               </div>
             )}
 
             {listeB && (
               <div className="bg-white/80 p-6 rounded-lg shadow-lg border-2 border-black/5">
-                <h3 className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei">LISTE_B : Mots à réviser</h3>
+                <h3 className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei">{t.wordsToReview}</h3>
                 <div className="prose max-w-none whitespace-pre-wrap leading-relaxed text-lg">
                   {listeB}
                 </div>
@@ -270,13 +296,13 @@ const App: React.FC = () => {
           <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white/50 backdrop-blur-sm p-8 rounded-lg shadow-md border-l-8 border-brownCustom">
               <p className="text-lg leading-relaxed">
-                れんぐ先生 peut t’aider à lister les mots les plus couramment utilisé à partir d’un kanji pour que tu puisses facilement apprendre les mots contenant ce kanji. A toi de jouer, quel kanji cherches-tu ?
+                {t.introSearch}
               </p>
             </div>
 
             <div className="flex flex-col gap-6 bg-white/60 p-10 rounded-2xl border-2 border-black/5 shadow-xl items-center md:items-start">
               <div className="flex flex-col gap-3 w-full md:w-auto">
-                <label className="font-bold text-xl">漢字を探す :</label>
+                <label className="font-bold text-xl">{t.labelSearchKanji}</label>
                 <input
                   type="text"
                   maxLength={10}
@@ -288,7 +314,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-3 w-full md:w-auto">
-                <label className="font-bold text-xl">何言葉 (Nombre de mots) :</label>
+                <label className="font-bold text-xl">{t.labelNumWords}</label>
                 <select 
                   className="w-full md:w-[200px] p-4 border-2 border-black rounded bg-white text-xl font-bold focus:ring-4 focus:ring-indianRed/30 outline-none shadow-sm cursor-pointer"
                   value={numWords}
@@ -305,16 +331,16 @@ const App: React.FC = () => {
                   disabled={loadingC || !kanjiRef || !hasKanji(kanjiRef) || hasAlphanumeric(kanjiRef)}
                   className="px-16 py-5 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all disabled:opacity-30 text-2xl shadow-2xl uppercase tracking-[0.2em] rounded-sm"
                 >
-                  送る
+                  {t.btnSend}
                 </button>
-                {loadingC && <p className="animate-pulse font-bold text-brownCustom text-xl">Génération en cours...</p>}
+                {loadingC && <p className="animate-pulse font-bold text-brownCustom text-xl">{t.generating}</p>}
               </div>
             </div>
 
             {listeC && (
               <div className="bg-white/95 p-10 rounded-xl shadow-2xl border-t-8 border-brownCustom border-x border-b border-black/10">
                 <h3 className="font-bold text-2xl mb-8 border-b-2 border-brownCustom pb-4 font-kaisei text-brownCustom uppercase tracking-wider">
-                  Mots courants avec {kanjiRef}
+                  {t.commonWordsWith} {kanjiRef}
                 </h3>
                 <div className="prose max-w-none whitespace-pre-wrap leading-relaxed text-xl">
                   {listeC}
@@ -330,14 +356,14 @@ const App: React.FC = () => {
             onClick={handleReset}
             className="px-14 py-5 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all rounded shadow-2xl uppercase tracking-widest text-xl"
           >
-            削除する
+            {t.btnReset}
           </button>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="w-full p-10 bg-black text-white text-center mt-auto border-t-4 border-brownCustom">
-        <p className="font-bold text-xl tracking-tight">Créé par Géraldine PERY, France</p>
+        <p className="font-bold text-xl tracking-tight">{t.footerText}</p>
         <div className="mt-3">
           <a 
             href="https://www.linkedin.com/in/geraldine-pery/" 

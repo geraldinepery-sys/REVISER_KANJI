@@ -11,6 +11,16 @@ export enum Tense {
   FUTURE = "未来形"
 }
 
+export enum Language {
+  FR = "fr",
+  EN = "en",
+  ES = "es",
+  IT = "it",
+  DE = "de",
+  PL = "pl",
+  PT = "pt"
+}
+
 export interface WordEntry {
   raw: string;
   kanji: string;
@@ -26,4 +36,5 @@ export interface AppState {
   generatedText: string;
   listeB: string;
   loading: boolean;
+  language: Language;
 }
