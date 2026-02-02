@@ -175,7 +175,7 @@ const App: React.FC = () => {
           >
             <div className="flex flex-col">
               <span>{t.tabs.review}</span>
-              <span className="text-xs opacity-80 uppercase tracking-tighter">{t.tabLabels.review}</span>
+              <span className="text-xs opacity-80 tracking-tighter">{t.tabLabels.review}</span>
             </div>
           </button>
           <button 
@@ -184,7 +184,7 @@ const App: React.FC = () => {
           >
             <div className="flex flex-col">
               <span>{t.tabs.search}</span>
-              <span className="text-xs opacity-80 uppercase tracking-tighter">{t.tabLabels.search}</span>
+              <span className="text-xs opacity-80 tracking-tighter">{t.tabLabels.search}</span>
             </div>
           </button>
         </div>
@@ -202,13 +202,10 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-4">
-              <label className="font-bold text-xl flex items-center gap-2">
-                <span className="bg-brownCustom text-white px-2 py-1 rounded text-sm">{t.labelRefText}</span> 
-              </label>
               <textarea
                 className="w-full bg-indianRed text-white p-5 rounded border border-brownCustom focus:outline-none focus:ring-2 focus:ring-black placeholder-white/60 text-lg shadow-inner"
                 rows={10}
-                placeholder={t.placeholderInput}
+                placeholder={t.placeholderInput.replace(/<br\s*\/?>/gi, '\n')}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
@@ -216,17 +213,20 @@ const App: React.FC = () => {
                 <button
                   onClick={handleExtractA}
                   disabled={loadingA || !inputText || !hasKanji(inputText)}
-                  className="px-12 py-4 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all disabled:opacity-30 text-xl shadow-lg uppercase tracking-widest"
+                  className="px-12 py-3 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all disabled:opacity-30 text-xl shadow-lg tracking-widest leading-tight"
                 >
-                  {t.btnSend}
+                  <span dangerouslySetInnerHTML={{ __html: t.btnSend }} />
                 </button>
-                {loadingA && <p className="animate-pulse font-bold text-brownCustom text-lg">{t.generating}</p>}
+                {loadingA && <p className="animate-pulse font-bold text-brownCustom text-lg text-center leading-tight" dangerouslySetInnerHTML={{ __html: t.generating }} />}
               </div>
             </div>
 
             {listeA && (
               <div className="bg-white/80 p-6 rounded-lg shadow-lg border-2 border-black/5">
-                <h3 className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei">{t.extractedWords}</h3>
+                <h3 
+                  className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei leading-tight"
+                  dangerouslySetInnerHTML={{ __html: t.extractedWords }}
+                />
                 <div className="prose max-w-none whitespace-pre-wrap leading-relaxed text-lg">
                   {listeA}
                 </div>
@@ -234,34 +234,34 @@ const App: React.FC = () => {
             )}
 
             {listeA && (
-              <div className="flex flex-col md:flex-row gap-6 bg-white/70 p-8 rounded-xl border border-black/10 shadow-lg">
-                <div className="flex-1 flex flex-col gap-3">
-                  <label className="font-bold">{t.storyType}</label>
+              <div className="flex flex-col md:flex-row gap-6 bg-white/70 p-8 rounded-xl border border-black/10 shadow-lg items-end">
+                <div className="flex-1 flex flex-col gap-3 w-full">
+                  <label className="font-bold leading-tight" dangerouslySetInnerHTML={{ __html: t.storyType }} />
                   <select 
                     className="p-3 border-2 border-black rounded bg-white text-lg focus:ring-2 focus:ring-indianRed outline-none"
                     value={storyType}
                     onChange={(e) => setStoryType(e.target.value as StoryType)}
                   >
-                    {Object.values(StoryType).map(t => <option key={t} value={t}>{t}</option>)}
+                    {Object.values(StoryType).map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
-                <div className="flex-1 flex flex-col gap-3">
-                  <label className="font-bold">{t.tense}</label>
+                <div className="flex-1 flex flex-col gap-3 w-full">
+                  <label className="font-bold leading-tight" dangerouslySetInnerHTML={{ __html: t.tense }} />
                   <select 
                     className="p-3 border-2 border-black rounded bg-white text-lg focus:ring-2 focus:ring-indianRed outline-none"
                     value={tense}
                     onChange={(e) => setTense(e.target.value as Tense)}
                   >
-                    {Object.values(Tense).map(t => <option key={t} value={t}>{t}</option>)}
+                    {Object.values(Tense).map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
-                <div className="flex items-end">
+                <div className="w-full md:w-auto">
                   <button
                     onClick={handleProcessStoryAndB}
                     disabled={loadingStory || loadingB}
-                    className="w-full md:w-auto px-8 py-3 bg-brownCustom text-white font-bold hover:bg-black transition-all rounded shadow-md text-lg"
+                    className="w-full px-8 py-3 bg-brownCustom text-white font-bold hover:bg-black transition-all rounded shadow-md text-lg leading-tight"
                   >
-                    {loadingStory ? t.generating : t.btnGenerate}
+                    <span dangerouslySetInnerHTML={{ __html: loadingStory ? t.generating : t.btnGenerate }} />
                   </button>
                 </div>
               </div>
@@ -269,20 +269,23 @@ const App: React.FC = () => {
 
             {generatedText && (
               <div className="bg-white/95 p-10 rounded-xl shadow-2xl border-t-8 border-black">
-                <h3 className="font-bold text-3xl mb-8 text-center text-brownCustom">{t.newStory}</h3>
+                <h3 className="font-bold text-3xl mb-8 text-center text-brownCustom leading-tight" dangerouslySetInnerHTML={{ __html: t.newStory }} />
                 <div 
                   className="text-2xl leading-[3.5rem] tracking-wider whitespace-pre-line text-justify" 
                   dangerouslySetInnerHTML={{ 
                     __html: generatedText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-indianRed border-b-2 border-indianRed/30">$1</strong>') 
                   }} 
                 />
-                {loadingB && <p className="mt-8 text-center animate-pulse font-bold text-brownCustom">{t.generating}</p>}
+                {loadingB && <p className="mt-8 text-center animate-pulse font-bold text-brownCustom leading-tight" dangerouslySetInnerHTML={{ __html: t.generating }} />}
               </div>
             )}
 
             {listeB && (
               <div className="bg-white/80 p-6 rounded-lg shadow-lg border-2 border-black/5">
-                <h3 className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei">{t.wordsToReview}</h3>
+                <h3 
+                  className="font-bold text-2xl mb-4 border-b-2 border-brownCustom pb-2 font-kaisei leading-tight"
+                  dangerouslySetInnerHTML={{ __html: t.wordsToReview }}
+                />
                 <div className="prose max-w-none whitespace-pre-wrap leading-relaxed text-lg">
                   {listeB}
                 </div>
@@ -300,47 +303,57 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex flex-col gap-6 bg-white/60 p-10 rounded-2xl border-2 border-black/5 shadow-xl items-center md:items-start">
-              <div className="flex flex-col gap-3 w-full md:w-auto">
-                <label className="font-bold text-xl">{t.labelSearchKanji}</label>
-                <input
-                  type="text"
-                  maxLength={10}
-                  className="w-full md:w-[400px] h-[4rem] bg-indianRed text-white p-4 rounded border-2 border-brownCustom focus:outline-none focus:ring-4 focus:ring-black/20 text-center text-4xl shadow-inner font-bold placeholder:text-white/40"
-                  placeholder="漢字"
-                  value={kanjiRef}
-                  onChange={(e) => setKanjiRef(e.target.value)}
-                />
-              </div>
+            <div className="bg-white/60 p-10 rounded-2xl border-2 border-black/5 shadow-xl">
+              <div className="flex flex-col md:flex-row md:items-end gap-6 w-full">
+                {/* Left: Kanji Input */}
+                <div className="flex flex-col gap-3 flex-grow md:max-w-[300px]">
+                  <label className="font-bold text-xl leading-tight" dangerouslySetInnerHTML={{ __html: t.labelSearchKanji }} />
+                  <input
+                    type="text"
+                    maxLength={10}
+                    className="w-full h-[4rem] bg-indianRed text-white p-4 rounded border-2 border-brownCustom focus:outline-none focus:ring-4 focus:ring-black/20 text-center text-4xl shadow-inner font-bold placeholder:text-white/40"
+                    placeholder="漢字"
+                    value={kanjiRef}
+                    onChange={(e) => setKanjiRef(e.target.value)}
+                  />
+                </div>
 
-              <div className="flex flex-col gap-3 w-full md:w-auto">
-                <label className="font-bold text-xl">{t.labelNumWords}</label>
-                <select 
-                  className="w-full md:w-[200px] p-4 border-2 border-black rounded bg-white text-xl font-bold focus:ring-4 focus:ring-indianRed/30 outline-none shadow-sm cursor-pointer"
-                  value={numWords}
-                  onChange={(e) => setNumWords(e.target.value)}
-                >
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-              </div>
+                {/* Middle: Number Select */}
+                <div className="flex flex-col gap-3 w-full md:w-[150px]">
+                  <label className="font-bold text-xl leading-tight" dangerouslySetInnerHTML={{ __html: t.labelNumWords }} />
+                  <select 
+                    className="w-full h-[4rem] p-4 border-2 border-black rounded bg-white text-xl font-bold focus:ring-4 focus:ring-indianRed/30 outline-none shadow-sm cursor-pointer"
+                    value={numWords}
+                    onChange={(e) => setNumWords(e.target.value)}
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                  </select>
+                </div>
 
-              <div className="flex flex-col items-center gap-3 pt-6 w-full">
-                <button
-                  onClick={handleExtractC}
-                  disabled={loadingC || !kanjiRef || !hasKanji(kanjiRef) || hasAlphanumeric(kanjiRef)}
-                  className="px-16 py-5 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all disabled:opacity-30 text-2xl shadow-2xl uppercase tracking-[0.2em] rounded-sm"
-                >
-                  {t.btnSend}
-                </button>
-                {loadingC && <p className="animate-pulse font-bold text-brownCustom text-xl">{t.generating}</p>}
+                {/* Right: Submit Button */}
+                <div className="flex-shrink-0 w-full md:w-auto">
+                  <button
+                    onClick={handleExtractC}
+                    disabled={loadingC || !kanjiRef || !hasKanji(kanjiRef) || hasAlphanumeric(kanjiRef)}
+                    className="w-full md:w-auto h-[4rem] px-12 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all disabled:opacity-30 text-2xl shadow-lg tracking-wider rounded-sm leading-tight flex items-center justify-center"
+                  >
+                    <span dangerouslySetInnerHTML={{ __html: t.btnSend }} />
+                  </button>
+                </div>
               </div>
+              
+              {loadingC && (
+                <div className="mt-6 text-center md:text-left">
+                  <p className="animate-pulse font-bold text-brownCustom text-xl leading-tight" dangerouslySetInnerHTML={{ __html: t.generating }} />
+                </div>
+              )}
             </div>
 
             {listeC && (
               <div className="bg-white/95 p-10 rounded-xl shadow-2xl border-t-8 border-brownCustom border-x border-b border-black/10">
-                <h3 className="font-bold text-2xl mb-8 border-b-2 border-brownCustom pb-4 font-kaisei text-brownCustom uppercase tracking-wider">
-                  {t.commonWordsWith} {kanjiRef}
+                <h3 className="font-bold text-2xl mb-8 border-b-2 border-brownCustom pb-4 font-kaisei text-brownCustom tracking-wider leading-tight">
+                  <span dangerouslySetInnerHTML={{ __html: t.commonWordsWith }} /> {kanjiRef}
                 </h3>
                 <div className="prose max-w-none whitespace-pre-wrap leading-relaxed text-xl">
                   {listeC}
@@ -354,15 +367,16 @@ const App: React.FC = () => {
         <div className="flex justify-center mt-12 mb-20">
           <button
             onClick={handleReset}
-            className="px-14 py-5 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all rounded shadow-2xl uppercase tracking-widest text-xl"
+            className="px-14 py-4 bg-black text-white font-bold hover:bg-white hover:text-black border-2 border-black transition-all rounded shadow-2xl tracking-widest text-xl leading-tight"
           >
-            {t.btnReset}
+            <span dangerouslySetInnerHTML={{ __html: t.btnReset }} />
           </button>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="w-full p-10 bg-black text-white text-center mt-auto border-t-4 border-brownCustom">
+        <p className="text-sm opacity-70 mb-2">Powered by Gemini from Google AI Studio</p>
         <p className="font-bold text-xl tracking-tight">{t.footerText}</p>
         <div className="mt-3">
           <a 
