@@ -28,6 +28,14 @@ export interface WordEntry {
   meaning: string;
 }
 
+export interface KanjiDetails {
+  kanji: string;
+  onyomi: string;
+  kunyomi: string;
+  meaning: string;
+  jishoLink: string;
+}
+
 export interface AppState {
   inputText: string;
   listeA: string;

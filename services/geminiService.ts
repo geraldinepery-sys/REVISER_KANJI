@@ -1,20 +1,18 @@
 
-import { GoogleGenAI } from "@google/genai";
-import { StoryType, Tense, Language } from "../types";
+import { GoogleGenAI, Type } from "@google/genai";
+import { StoryType, Tense, Language, KanjiDetails } from "../types";
 import { translations } from "../translations";
 
-const MODEL_NAME = 'gemini-3-flash-preview';
+const TEXT_MODEL = 'gemini-3-flash-preview';
+const PRO_MODEL = 'gemini-3-pro-preview';
 
 export class GeminiService {
   private ai: GoogleGenAI;
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }
 
-  /**
-   * METHODE_LISTER_MOT implementation
-   */
   async extractWords(text: string, language: Language): Promise<string> {
     const langLabel = translations[language].name;
     const prompt = `
@@ -37,7 +35,7 @@ export class GeminiService {
     `;
 
     const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
+      model: TEXT_MODEL,
       contents: prompt,
     });
 
@@ -66,7 +64,7 @@ export class GeminiService {
     `;
 
     const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
+      model: TEXT_MODEL,
       contents: prompt,
       config: {
         temperature: 0.2,
@@ -78,9 +76,6 @@ export class GeminiService {
     return response.text || "";
   }
 
-  /**
-   * METHODE_KANJI_MOT_COURANT implementation
-   */
   async getCommonWords(kanji: string, count: string, language: Language): Promise<string> {
     const langLabel = translations[language].name;
     const prompt = `
@@ -101,7 +96,7 @@ export class GeminiService {
     `;
 
     const response = await this.ai.models.generateContent({
-      model: MODEL_NAME,
+      model: TEXT_MODEL,
       contents: prompt,
       config: {
         temperature: 0.3,
@@ -109,5 +104,63 @@ export class GeminiService {
     });
 
     return response.text || "";
+  }
+
+  async recognizeKanji(base64Image: string): Promise<string[]> {
+    const prompt = "analyse l'image pour déterminer le kanji qui est écrit et propose 10 kanji le plus ressemblant avec en premier, celui qui correspond le plus et en dernier celui qui correspond le moins. Réponds uniquement avec les 10 kanji séparés par des virgules.";
+    
+    const imagePart = {
+      inlineData: {
+        mimeType: 'image/png',
+        data: base64Image.split(',')[1],
+      },
+    };
+
+    const response = await this.ai.models.generateContent({
+      model: PRO_MODEL,
+      contents: { parts: [imagePart, { text: prompt }] },
+    });
+
+    const text = response.text || "";
+    return text.split(',').map(s => s.trim()).filter(s => s.length > 0).slice(0, 10);
+  }
+
+  async getKanjiDetails(kanji: string, language: Language): Promise<KanjiDetails> {
+    const langLabel = translations[language].name;
+    const prompt = `
+      Analyse le kanji "${kanji}" pour un utilisateur dont la langue est ${langLabel}.
+      Fournis les informations suivantes de manière concise :
+      - Les prononciations Onyomi et Kunyomi les plus courantes.
+      - La signification (meaning) traduite impérativement en ${langLabel}.
+      - Le lien vers Jisho.org.
+      
+      Format attendu : JSON.
+      Ne fournis AUCUNE explication structurelle, narrative ou historique.
+    `;
+
+    const response = await this.ai.models.generateContent({
+      model: PRO_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            kanji: { type: Type.STRING },
+            onyomi: { type: Type.STRING },
+            kunyomi: { type: Type.STRING },
+            meaning: { type: Type.STRING },
+            jishoLink: { type: Type.STRING },
+          },
+          required: ["kanji", "onyomi", "kunyomi", "meaning", "jishoLink"]
+        }
+      }
+    });
+
+    const details = JSON.parse(response.text || "{}") as KanjiDetails;
+    if (!details.jishoLink || !details.jishoLink.includes('jisho.org')) {
+      details.jishoLink = `https://jisho.org/search/${encodeURIComponent(kanji)}%20%23kanji`;
+    }
+    return details;
   }
 }
